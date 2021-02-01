@@ -1,7 +1,7 @@
 {
-  "name": "nocarrier/hal",
+  "name": "shoppingfeed/hal",
   "type": "library",
-  "description": "application/hal builder / formatter for PHP 5.3+",
+  "description": "Fork of nocarrier/hal, an application/hal builder / formatter for PHP 5.3+",
   "keywords": ["hal", "xml", "json", "rest", "hypermedia"],
   "homepage": "https://github.com/blongden/hal",
   "license": "MIT",
