@@ -93,11 +93,11 @@ class HalJsonRenderer implements HalRenderer
 
         $data = [];
 
-        foreach ($resources as $resource) {
+        foreach ($resources as $key => $resource) {
             $res = $this->arrayForJson($resource);
 
             if (! empty($res)) {
-                $data[] = $res;
+                $data[$key] = $res;
             }
         }
 
