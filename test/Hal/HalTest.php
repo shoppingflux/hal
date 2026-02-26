@@ -19,7 +19,6 @@ use Nocarrier\JsonHalFactory;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use RuntimeException;
 use SimpleXmlElement;
-use stdClass;
 
 /**
  * HalTest
@@ -626,13 +625,6 @@ EOD;
         $this->assertIsArray($resource->_embedded->resource);
         $this->assertEquals($resource->_embedded->resource[0]->field1, '1');
         $this->assertEquals($resource->_embedded->resource[1]->field1, '2');
-    }
-
-    public function testSetResourceThrowsIfNotPassedHalOrArray(): void
-    {
-        $this->setExpectedException('\InvalidArgumentException', '$resource should be of type array or Nocarrier\Hal');
-        $hal = new Hal('http://example.com/');
-        $hal->setResource('resource', new stdClass());
     }
 
     public function testSetResourceJsonResponse(): void

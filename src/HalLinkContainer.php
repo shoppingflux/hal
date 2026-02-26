@@ -27,10 +27,10 @@ class HalLinkContainer extends ArrayObject
      * Retrieve a link from the container by rel. Also resolve any curie links
      * if they are set.
      *
-     * @return array|bool
+     * @return list<HalLink>|false
      *   Link if found. Otherwise false.
      */
-    public function get(string $rel)
+    public function get(string $rel): array|false
     {
         if (array_key_exists($rel, (array) $this)) {
             return $this[$rel];

@@ -21,7 +21,7 @@ use Stringable;
  * @package Nocarrier
  * @author Ben Longden <ben@nocarrier.co.uk>
  */
-class HalLink implements Stringable
+readonly class HalLink implements Stringable
 {
     /**
      * The \Nocarrier\HalLink object.

@@ -44,9 +44,10 @@ class HalJsonRenderer implements HalRenderer
      * associated links.
      *
      * @param mixed $uri
-     * @param array $links
+     * @param iterable<string, mixed> $links
+     * @param list<string>
      */
-    protected function linksForJson($uri, $links, $arrayLinkRels): array
+    protected function linksForJson($uri, iterable $container, array $arrayLinkRels): array
     {
         $data = [];
 
@@ -54,8 +55,8 @@ class HalJsonRenderer implements HalRenderer
             $data['self'] = ['href' => $uri];
         }
 
-        foreach ($links as $rel => $links) {
-            if (count($links) === 1 && $rel !== 'curies' && ! in_array($rel, $arrayLinkRels)) {
+        foreach ($container as $rel => $links) {
+            if (count($links) === 1 && $rel !== 'curies' && ! in_array($rel, $arrayLinkRels, true)) {
                 $data[$rel] = ['href' => $links[0]->getUri()];
 
                 foreach ($links[0]->getAttributes() as $attribute => $value) {
@@ -83,10 +84,9 @@ class HalJsonRenderer implements HalRenderer
      * Return an array (compatible with the hal+json format) representing
      * associated resources.
      *
-     * @param mixed $resources
-     * @return array
+     * @param list<Hal>|Hal $resources
      */
-    protected function resourcesForJson($resources)
+    protected function resourcesForJson(array|Hal $resources): mixed
     {
         if (! is_array($resources)) {
             return $this->arrayForJson($resources);
@@ -134,10 +134,8 @@ class HalJsonRenderer implements HalRenderer
     /**
      * Return an array (compatible with the hal+json format) representing the
      * complete response.
-     *
-     * @return array
      */
-    protected function arrayForJson(Hal $resource = null)
+    protected function arrayForJson(Hal $resource = null): mixed
     {
         if ($resource == null) {
             return [];

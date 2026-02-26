@@ -49,11 +49,11 @@ class JsonHalFactory
     }
 
     /**
-     * @param array<int, mixed> $links
+     * @param array<int, mixed> $container
      */
-    private static function addJsonLinkData(Hal $hal, array $links): void
+    private static function addJsonLinkData(Hal $hal, array $container): void
     {
-        foreach ($links as $rel => $links) {
+        foreach ($container as $rel => $links) {
             if (! isset($links[0]) || ! is_array($links[0])) {
                 $links = [$links];
             }
