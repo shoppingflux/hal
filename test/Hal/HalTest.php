@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of the Hal library
  *
@@ -10,10 +11,15 @@
  * @package Nocarrier
  */
 
-namespace Nocarrier\Tests;
+namespace Nocarrier\Test;
 
-use \Nocarrier\Hal;
-use \Nocarrier\JsonHalFactory;
+use ArrayIterator;
+use Nocarrier\Hal;
+use Nocarrier\JsonHalFactory;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use RuntimeException;
+use SimpleXmlElement;
+use stdClass;
 
 /**
  * HalTest
@@ -22,33 +28,37 @@ use \Nocarrier\JsonHalFactory;
  * @subpackage Tests
  * @author Ben Longden <ben@nocarrier.co.uk>
  */
+#[CoversMethod(Hal::class, 'addLink')]
+#[CoversMethod(Hal::class, 'addHalLink')]
+#[CoversMethod(Hal::class, 'linksForJson')]
+#[CoversMethod(Hal::class, 'linksForXml')]
 class HalTest extends TestCase
 {
-    public function testHalJsonResponseAllowsNoSelfLink()
+    public function testHalJsonResponseAllowsNoSelfLink(): void
     {
         $hal = new Hal();
         $this->assertEquals('[]', $hal->asJson());
     }
 
-    public function testHalXmlResponseAllowsNoSelfLink()
+    public function testHalXmlResponseAllowsNoSelfLink(): void
     {
         $hal = new Hal();
         $this->assertEquals("<?xml version=\"1.0\"?>\n<resource/>\n", $hal->asXml());
     }
 
-    public function testHalResponseReturnsSelfLinkJson()
+    public function testHalResponseReturnsSelfLinkJson(): void
     {
         $hal = new Hal('http://example.com/');
         $this->assertEquals('{"_links":{"self":{"href":"http:\/\/example.com\/"}}}', $hal->asJson());
     }
 
-    public function testHalResponseReturnsSelfLinkXml()
+    public function testHalResponseReturnsSelfLinkXml(): void
     {
         $hal = new Hal('http://example.com/');
         $this->assertEquals("<?xml version=\"1.0\"?>\n<resource href=\"http://example.com/\"/>\n", $hal->asXml());
     }
 
-    public function testAddLinkJsonResponse()
+    public function testAddLinkJsonResponse(): void
     {
         $hal = new Hal('http://example.com/');
         $hal->addLink('test', '/test/1');
@@ -58,28 +68,27 @@ class HalTest extends TestCase
         $this->assertEquals('/test/1', $result->_links->test->href);
     }
 
-    public function testAddLinkRelAsArrayJsonResponse()
+    public function testAddLinkRelAsArrayJsonResponse(): void
     {
         $hal = new Hal('http://example.com/');
         $hal->addLink('test', '/test/1', array(), true);
-        $json =  $hal->asJson();
+        $json         = $hal->asJson();
         $expectedJson = '{"_links":{"self":{"href":"http:\/\/example.com\/"},"test":[{"href":"\/test\/1"}]}}';
-        $this->assertEquals($json,$expectedJson);
+        $this->assertEquals($json, $expectedJson);
     }
 
-
-    public function testAddLinkXmlResponse()
+    public function testAddLinkXmlResponse(): void
     {
         $hal = new Hal('http://example.com/');
         $hal->addLink('test', '/test/1');
 
-        $result = new \SimpleXmlElement($hal->asXml());
-        $data = $result->link->attributes();
+        $result = new SimpleXmlElement($hal->asXml());
+        $data   = $result->link->attributes();
         $this->assertEquals('test', $data['rel']);
         $this->assertEquals('/test/1', $data['href']);
     }
 
-    public function testXmlPrettyPrintResponse()
+    public function testXmlPrettyPrintResponse(): void
     {
         $hal = new Hal('http://example.com/');
         $hal->addLink('test', '/test/1');
@@ -94,7 +103,7 @@ EOD;
         $this->assertEquals($response, $hal->asXml(true));
     }
 
-    public function testResourceJsonResponse()
+    public function testResourceJsonResponse(): void
     {
         $hal = new Hal('http://example.com/');
         $res = new Hal('/resource/1', array('field1' => 'value1', 'field2' => 'value2'));
@@ -102,13 +111,13 @@ EOD;
 
         $resource = json_decode($hal->asJson());
         $this->assertInstanceOf('StdClass', $resource->_embedded);
-        $this->assertInternalType('array', $resource->_embedded->resource);
+        $this->assertIsArray($resource->_embedded->resource);
         $this->assertEquals($resource->_embedded->resource[0]->_links->self->href, '/resource/1');
         $this->assertEquals($resource->_embedded->resource[0]->field1, 'value1');
         $this->assertEquals($resource->_embedded->resource[0]->field2, 'value2');
     }
 
-    public function testResourceJsonResponseForceAsNoArray()
+    public function testResourceJsonResponseForceAsNoArray(): void
     {
         $hal = new Hal('http://example.com/');
         $res = new Hal('/resource/1', array('field1' => 'value1', 'field2' => 'value2'));
@@ -122,19 +131,19 @@ EOD;
         $this->assertEquals($resource->_embedded->resource->field2, 'value2');
     }
 
-    public function testResourceXmlResponse()
+    public function testResourceXmlResponse(): void
     {
         $hal = new Hal('http://example.com/');
         $res = new Hal('/resource/1', array('field1' => 'value1', 'field2' => 'value2'));
         $hal->addResource('resource', $res);
 
-        $result = new \SimpleXmlElement($hal->asXml());
+        $result = new SimpleXmlElement($hal->asXml());
         $this->assertEquals('/resource/1', $result->resource->attributes()->href);
         $this->assertEquals('value1', $result->resource->field1);
         $this->assertEquals('value2', $result->resource->field2);
     }
 
-    public function testEmbeddedResourceInResourceJsonResponse()
+    public function testEmbeddedResourceInResourceJsonResponse(): void
     {
         $hal = new Hal('http://example.com/');
         $res = new Hal('/resource/1', array('field1' => 'value1', 'field2' => 'value2'));
@@ -143,19 +152,22 @@ EOD;
             new Hal(
                 '/resource/1/item/1',
                 array(
-                    'itemField1' => 'itemValue1'
-                )
-            )
+                    'itemField1' => 'itemValue1',
+                ),
+            ),
         );
 
         $hal->addResource('resource', $res);
         $result = json_decode($hal->asJson());
-        $this->assertInternalType('array', $result->_embedded->resource[0]->_embedded->item);
-        $this->assertEquals('/resource/1/item/1', $result->_embedded->resource[0]->_embedded->item[0]->_links->self->href);
+        $this->assertIsArray($result->_embedded->resource[0]->_embedded->item);
+        $this->assertEquals(
+            '/resource/1/item/1',
+            $result->_embedded->resource[0]->_embedded->item[0]->_links->self->href,
+        );
         $this->assertEquals('itemValue1', $result->_embedded->resource[0]->_embedded->item[0]->itemField1);
     }
 
-    public function testEmbeddedResourceInResourceXmlResponse()
+    public function testEmbeddedResourceInResourceXmlResponse(): void
     {
         $hal = new Hal('http://example.com/');
         $res = new Hal('/resource/1', array('field1' => 'value1', 'field2' => 'value2'));
@@ -166,21 +178,21 @@ EOD;
                 array(
                     'items' => array(
                         array(
-                            'itemField1' => 'itemValue1'
-                        )
-                    )
-                )
-            )
+                            'itemField1' => 'itemValue1',
+                        ),
+                    ),
+                ),
+            ),
         );
 
         $hal->addResource('resource', $res);
-        $result = new \SimpleXmlElement($hal->asXml());
+        $result = new SimpleXmlElement($hal->asXml());
         $this->assertEquals('item', $result->resource->resource->attributes()->rel);
         $this->assertEquals('/resource/1/item/1', $result->resource->resource->attributes()->href);
         $this->assertEquals('itemValue1', $result->resource->resource->items[0]->itemField1);
     }
 
-    public function testResourceWithListRendersCorrectlyInXmlResponse()
+    public function testResourceWithListRendersCorrectlyInXmlResponse(): void
     {
         $hal = new Hal('/orders');
         $hal->addLink('next', '/orders?page=2');
@@ -191,33 +203,33 @@ EOD;
             array(
                 'tests' => array(
                     array(
-                        'total' => 30.00,
-                        'currency' => 'USD'
+                        'total'    => 30.00,
+                        'currency' => 'USD',
                     ),
                     array(
-                        'total' => 40.00,
-                        'currency' => 'GBP'
-                    )
-                )
-            )
+                        'total'    => 40.00,
+                        'currency' => 'GBP',
+                    ),
+                ),
+            ),
         );
         $resource->addLink('customer', '/customer/bob');
         $hal->addResource('order', $resource);
-        $result = new \SimpleXmlElement($hal->asXml());
-        $this->assertEquals(30, (string)$result->resource->tests[0]->total);
-        $this->assertEquals('USD', (string)$result->resource->tests[0]->currency);
-        $this->assertEquals(40, (string)$result->resource->tests[1]->total);
-        $this->assertEquals('GBP', (string)$result->resource->tests[1]->currency);
+        $result = new SimpleXmlElement($hal->asXml());
+        $this->assertEquals(30, (string) $result->resource->tests[0]->total);
+        $this->assertEquals('USD', (string) $result->resource->tests[0]->currency);
+        $this->assertEquals(40, (string) $result->resource->tests[1]->total);
+        $this->assertEquals('GBP', (string) $result->resource->tests[1]->currency);
     }
 
-    public function testAddingDataToRootResource()
+    public function testAddingDataToRootResource(): void
     {
         $hal = new Hal(
             '/root',
             array(
                 'firstname' => 'Ben',
-                'surname' => 'Longden'
-            )
+                'surname'   => 'Longden',
+            ),
         );
 
         $result = json_decode($hal->asJson(true));
@@ -225,7 +237,7 @@ EOD;
         $this->assertEquals('Longden', $result->surname);
     }
 
-    public function testAddArrayOfLinksInJson()
+    public function testAddArrayOfLinksInJson(): void
     {
         $hal = new Hal('/');
         $hal->addLink('members', '/member/1');
@@ -236,35 +248,35 @@ EOD;
         $this->assertEquals('/member/2', $result->_links->members[1]->href);
     }
 
-    public function testAddArrayOfLinksInXml()
+    public function testAddArrayOfLinksInXml(): void
     {
         $hal = new Hal('/');
         $hal->addLink('members', '/member/1');
         $hal->addLink('members', '/member/2');
-        $result = new \SimpleXmlElement($hal->asXml());
+        $result = new SimpleXmlElement($hal->asXml());
         $this->assertEquals('members', $result->link[0]->attributes()->rel);
         $this->assertEquals('members', $result->link[1]->attributes()->rel);
         $this->assertEquals('/member/1', $result->link[0]->attributes()->href);
         $this->assertEquals('/member/2', $result->link[1]->attributes()->href);
     }
 
-    public function testAttributesInXmlRepresentation()
+    public function testAttributesInXmlRepresentation(): void
     {
         $hal = new Hal(
             '/',
             array(
                 'error' => array(
-                    '@id' => 6,
+                    '@id'       => 6,
                     '@xml:lang' => 'en',
-                    'message' => 'This is a message'
-                )
-            )
+                    'message'   => 'This is a message',
+                ),
+            ),
         );
 
-        $xml = new \SimpleXMLElement($hal->asXml());
-        $this->assertEquals(6, (string)$xml->error->attributes()->id);
-        $this->assertEquals('en', (string)$xml->error->attributes()->lang);
-        $this->assertEquals('This is a message', (string)$xml->error->message);
+        $xml = new SimpleXmlElement($hal->asXml());
+        $this->assertEquals(6, (string) $xml->error->attributes()->id);
+        $this->assertEquals('en', (string) $xml->error->attributes()->lang);
+        $this->assertEquals('This is a message', (string) $xml->error->message);
 
         $json = json_decode($hal->asJson(true));
         $this->assertEquals(6, $json->error->id);
@@ -272,23 +284,18 @@ EOD;
         $this->assertEquals('This is a message', $json->error->message);
     }
 
-    /**
-     * @covers \Nocarrier\Hal::addLink
-     * @covers \Nocarrier\Hal::addHalLink
-     * @covers \Nocarrier\HalJsonRenderer::linksForJson
-     */
-    public function testLinkAttributesInJson()
+    public function testLinkAttributesInJson(): void
     {
         $hal = new Hal('http://example.com/');
         $hal->addLink('test', '/test/{?id}', array(
-            'anchor' => '#foo',
-            'rev' => 'canonical',
-            'hreflang' => 'en',
-            'media' => 'screen',
-            'type' => 'text/html',
+            'anchor'    => '#foo',
+            'rev'       => 'canonical',
+            'hreflang'  => 'en',
+            'media'     => 'screen',
+            'type'      => 'text/html',
             'templated' => 'true',
-            'name' => 'ex',
-            'title' => 'My Test'
+            'name'      => 'ex',
+            'title'     => 'My Test',
         ));
 
         $result = json_decode($hal->asJson());
@@ -302,34 +309,31 @@ EOD;
         $this->assertEquals('My Test', $result->_links->test->title);
     }
 
-    /**
-     * @covers \Nocarrier\HalJsonRenderer::linksForJson
-     * Provided for code coverage
-     */
-    public function testLinkAttributesInJsonWithArrayOfLinks()
+    public function testLinkAttributesInJsonWithArrayOfLinks(): void
     {
         $hal = new Hal('http://example.com/');
         $hal->addLink('test', '/test/{?id}', array(
-            'anchor' => '#foo1',
-            'rev' => 'canonical1',
-            'hreflang' => 'en1',
-            'media' => 'screen1',
-            'type' => 'text/html1',
+            'anchor'    => '#foo1',
+            'rev'       => 'canonical1',
+            'hreflang'  => 'en1',
+            'media'     => 'screen1',
+            'type'      => 'text/html1',
             'templated' => 'true1',
-            'name' => 'ex1',
+            'name'      => 'ex1',
         ));
         $hal->addLink('test', '/test/{?id}', array(
-            'anchor' => '#foo2',
-            'rev' => 'canonical2',
-            'hreflang' => 'en2',
-            'media' => 'screen2',
-            'type' => 'text/html2',
+            'anchor'    => '#foo2',
+            'rev'       => 'canonical2',
+            'hreflang'  => 'en2',
+            'media'     => 'screen2',
+            'type'      => 'text/html2',
             'templated' => 'true2',
-            'name' => 'ex2',
+            'name'      => 'ex2',
         ));
 
         $result = json_decode($hal->asJson());
-        $i = 1;
+        $i      = 1;
+
         foreach ($result->_links->test as $testLink) {
             $this->assertEquals('#foo' . $i, $testLink->anchor);
             $this->assertEquals('canonical' . $i, $testLink->rev);
@@ -342,26 +346,21 @@ EOD;
         }
     }
 
-    /**
-     * @covers \Nocarrier\Hal::addLink
-     * @covers \Nocarrier\Hal::addHalLink
-     * @covers \Nocarrier\HalXmlRenderer::linksForXml
-     */
-    public function testLinkAttributesInXml()
+    public function testLinkAttributesInXml(): void
     {
         $hal = new Hal('http://example.com/');
         $hal->addLink('test', '/test/{?id}', array(
-            'anchor' => '#foo',
-            'rev' => 'canonical',
-            'hreflang' => 'en',
-            'media' => 'screen',
-            'type' => 'text/html',
+            'anchor'    => '#foo',
+            'rev'       => 'canonical',
+            'hreflang'  => 'en',
+            'media'     => 'screen',
+            'type'      => 'text/html',
             'templated' => 'true',
-            'name' => 'ex',
+            'name'      => 'ex',
         ));
 
-        $result = new \SimpleXmlElement($hal->asXml());
-        $data = $result->link->attributes();
+        $result = new SimpleXmlElement($hal->asXml());
+        $data   = $result->link->attributes();
         $this->assertEquals('#foo', $data['anchor']);
         $this->assertEquals('canonical', $data['rev']);
         $this->assertEquals('en', $data['hreflang']);
@@ -371,34 +370,31 @@ EOD;
         $this->assertEquals('ex', $data['name']);
     }
 
-    /**
-     * @covers \Nocarrier\HalXmlRenderer::linksForXml
-     * Provided for code coverage.
-     */
-    public function testLinkAttributesInXmlWithArrayOfLinks()
+    public function testLinkAttributesInXmlWithArrayOfLinks(): void
     {
         $hal = new Hal('http://example.com/');
         $hal->addLink('test', '/test/{?id}', array(
-            'anchor' => '#foo1',
-            'rev' => 'canonical1',
-            'hreflang' => 'en1',
-            'media' => 'screen1',
-            'type' => 'text/html1',
+            'anchor'    => '#foo1',
+            'rev'       => 'canonical1',
+            'hreflang'  => 'en1',
+            'media'     => 'screen1',
+            'type'      => 'text/html1',
             'templated' => 'true1',
-            'name' => 'ex1',
+            'name'      => 'ex1',
         ));
         $hal->addLink('test', '/test/{?id}', array(
-            'anchor' => '#foo2',
-            'rev' => 'canonical2',
-            'hreflang' => 'en2',
-            'media' => 'screen2',
-            'type' => 'text/html2',
+            'anchor'    => '#foo2',
+            'rev'       => 'canonical2',
+            'hreflang'  => 'en2',
+            'media'     => 'screen2',
+            'type'      => 'text/html2',
             'templated' => 'true2',
-            'name' => 'ex2',
+            'name'      => 'ex2',
         ));
 
-        $result = new \SimpleXmlElement($hal->asXml());
-        $i = 1;
+        $result = new SimpleXmlElement($hal->asXml());
+        $i      = 1;
+
         foreach ($result->link as $link) {
             $data = $link->attributes();
             $this->assertEquals('#foo' . $i, $data['anchor']);
@@ -412,7 +408,7 @@ EOD;
         }
     }
 
-    public function testNumericKeysUseParentAsXmlElementName()
+    public function testNumericKeysUseParentAsXmlElementName(): void
     {
         $hal = new Hal('/', array(
             'foo' => array(
@@ -421,7 +417,7 @@ EOD;
             ),
         ));
 
-        $result = new \SimpleXmlElement($hal->asXml());
+        $result = new SimpleXmlElement($hal->asXml());
 
         $this->assertEquals('bar', $result->foo[0]);
         $this->assertEquals('baz', $result->foo[1]);
@@ -431,95 +427,96 @@ EOD;
         $this->assertEquals(array('bar', 'baz'), $json['foo']);
     }
 
-    public function testMinimalHalJsonDecoding()
+    public function testMinimalHalJsonDecoding(): void
     {
         $sample = '{"_links":{"self":{"href":"http:\/\/example.com\/"}}}';
-        $hal = Hal::fromJson($sample);
+        $hal    = Hal::fromJson($sample);
         $this->assertEquals($sample, $hal->asJson());
     }
 
-    public function testHalJsonDecodeWithData()
+    public function testHalJsonDecodeWithData(): void
     {
         $sample = '{"_links":{"self":{"href":"http:\/\/example.com\/"}},"key":"value"}';
-        $data = Hal::fromJson($sample)->getData();
+        $data   = Hal::fromJson($sample)->getData();
         $this->assertEquals('value', $data['key']);
     }
 
-    public function testMinimalHalXmlDecoding()
+    public function testMinimalHalXmlDecoding(): void
     {
         $sample = "<?xml version=\"1.0\"?>\n<resource href=\"http://example.com/\"/>\n";
-        $hal = Hal::fromXml($sample);
+        $hal    = Hal::fromXml($sample);
         $this->assertEquals($sample, $hal->asXml());
     }
 
-    public function testHalXmlDecodeWithData()
+    public function testHalXmlDecodeWithData(): void
     {
         $sample = "<?xml version=\"1.0\"?>\n<resource href=\"http://example.com/\"><key>value</key></resource>\n";
-        $data = Hal::fromXml($sample)->getData();
+        $data   = Hal::fromXml($sample)->getData();
         $this->assertEquals('value', $data['key']);
     }
 
-    public function testHalJsonDecodeWithLinks()
+    public function testHalJsonDecodeWithLinks(): void
     {
-        $x = new Hal('/test', array('name' => "Ben Longden"));
+        $x = new Hal('/test', array('name' => 'Ben Longden'));
         $x->addLink('a', '/a');
         $y = Hal::fromJson($x->asJson());
 
         $this->assertEquals($x->asJson(true), $y->asJson(true));
     }
 
-    public function testHalXmlDecodeWithLinks()
+    public function testHalXmlDecodeWithLinks(): void
     {
-        $x = new Hal('/test', array('name' => "Ben Longden"));
+        $x = new Hal('/test', array('name' => 'Ben Longden'));
         $x->addLink('a', '/a');
         $y = Hal::fromXml($x->asXml());
         $this->assertEquals($x->asXml(), $y->asXml());
     }
 
-    public function testHalXmlEntitySetWhenValueSpecifiedInData()
+    public function testHalXmlEntitySetWhenValueSpecifiedInData(): void
     {
         $x = new Hal('/', array('x' => array('value' => 'test')));
 
-        $xml = new \SimpleXMLElement($x->asXml());
-        $this->assertEquals('test', (string)$xml->x);
+        $xml = new SimpleXmlElement($x->asXml());
+        $this->assertEquals('test', (string) $xml->x);
     }
 
-    public function testHalXmlEntitySetWhenValueSpecifiedInMultiData()
+    public function testHalXmlEntitySetWhenValueSpecifiedInMultiData(): void
     {
         $x = new Hal('/', array('x' => array('key' => 'test', 'value' => 'test')));
 
-        $xml = new \SimpleXMLElement($x->asXml());
-        $this->assertEquals('test', (string)$xml->x->key);
-        $this->assertEquals('test', (string)$xml->x->value);
+        $xml = new SimpleXmlElement($x->asXml());
+        $this->assertEquals('test', (string) $xml->x->key);
+        $this->assertEquals('test', (string) $xml->x->value);
     }
-    public function testBooleanOutput()
+
+    public function testBooleanOutput(): void
     {
         $hal = new Hal('/', array(
             'foo' => true,
-            'bar' => false
+            'bar' => false,
         ));
 
-        $xml = new \SimpleXMLElement($hal->asXml());
-        $this->assertSame('1', (string)$xml->foo);
-        $this->assertSame('0', (string)$xml->bar);
+        $xml = new SimpleXmlElement($hal->asXml());
+        $this->assertSame('1', (string) $xml->foo);
+        $this->assertSame('0', (string) $xml->bar);
 
         $json = json_decode($hal->asJson());
         $this->assertTrue($json->foo);
         $this->assertFalse($json->bar);
     }
 
-    public function testAddCurieConformsToSpecification()
+    public function testAddCurieConformsToSpecification(): void
     {
         $x = new Hal('/orders');
         $x->addCurie('acme', 'http://docs.acme.com/relations/{rel}');
         $obj = json_decode($x->asJson());
-        $this->assertInternalType('array', $obj->_links->curies);
+        $this->assertIsArray($obj->_links->curies);
         $this->assertTrue($obj->_links->curies[0]->templated);
         $this->assertEquals('acme', $obj->_links->curies[0]->name);
         $this->assertEquals('http://docs.acme.com/relations/{rel}', $obj->_links->curies[0]->href);
     }
 
-    public function testGetLinkByRelation()
+    public function testGetLinkByRelation(): void
     {
         $x = new Hal('/orders');
         $x->addLink('test', '/test/orders');
@@ -528,7 +525,7 @@ EOD;
         $this->assertEquals('/test/orders', $links[0]);
     }
 
-    public function testGetFirstLinkByRelation()
+    public function testGetFirstLinkByRelation(): void
     {
         $x = new Hal('/orders');
         $x->addLink('test', '/test/orders');
@@ -537,7 +534,7 @@ EOD;
         $this->assertEquals('/test/orders', $links);
     }
 
-    public function testGetLinkByCurieRelation()
+    public function testGetLinkByCurieRelation(): void
     {
         $x = new Hal('/orders');
         $x->addCurie('acme', 'http://docs.acme.com/relations/{rel}');
@@ -548,20 +545,22 @@ EOD;
         $this->assertEquals('/widgets', $links[0]);
     }
 
-    public function testGetLinkReturnsFalseOnFailure()
+    public function testGetLinkReturnsFalseOnFailure(): void
     {
         $x = new Hal('/orders');
         $this->assertFalse($x->getLink('test'));
     }
 
-    public function testJSONEmptyEmbeddedCollection(){
+    public function testJsonEmptyEmbeddedCollection(): void
+    {
         $x = new Hal();
         $x->addResource('collection');
 
         $this->assertEquals('{"_embedded":{"collection":[]}}', $x->asJson());
     }
 
-    public function testXMLEmptyEmbeddedCollection(){
+    public function testXmlEmptyEmbeddedCollection(): void
+    {
         $x = new Hal();
         $x->addResource('collection');
         $response = <<<EOD
@@ -572,7 +571,7 @@ EOD;
         $this->assertEquals($response, $x->asXml());
     }
 
-    public function testLinksWithAttributesUnserialiseCorrectlyJson()
+    public function testLinksWithAttributesUnserialiseCorrectlyJson(): void
     {
         $x = new Hal('/');
         $x->addCurie('x:test', 'http://test');
@@ -580,7 +579,7 @@ EOD;
         $this->assertEquals($x->asJson(), Hal::fromJson($x->asJson())->asJson());
     }
 
-    public function testLinksWithAttributesUnserialiseCorrectlyXml()
+    public function testLinksWithAttributesUnserialiseCorrectlyXml(): void
     {
         $x = new Hal('/');
         $x->addCurie('x:test', 'http://test');
@@ -588,7 +587,7 @@ EOD;
         $this->assertEquals($x->asXml(), Hal::fromXml($x->asXml())->asXml());
     }
 
-    public function testResourceWithNullSelfLinkRendersLinksInJson()
+    public function testResourceWithNullSelfLinkRendersLinksInJson(): void
     {
         $x = new Hal(null);
         $x->addLink('testrel', 'http://test');
@@ -596,10 +595,10 @@ EOD;
         $this->assertEquals('http://test', $data->_links->testrel->href);
     }
 
-    public function testDataCanBeTraversable()
+    public function testDataCanBeTraversable(): void
     {
-        $it = new \ArrayIterator(array('traversable' => new \ArrayIterator(array('key' => 'value'))));
-        $x = new Hal('', $it);
+        $it = new ArrayIterator(array('traversable' => new ArrayIterator(array('key' => 'value'))));
+        $x  = new Hal('', $it);
 
         $response = <<<EOD
 <?xml version="1.0"?>
@@ -609,34 +608,34 @@ EOD;
         $this->assertEquals($response, $x->asXml());
     }
 
-    public function testJsonAllowingDisableEncode()
+    public function testJsonAllowingDisableEncode(): void
     {
         $hal = new Hal();
         $this->assertSame(array(), $hal->asJson(false, false));
     }
 
-    public function testSetResourceWithArrayOfResources()
+    public function testSetResourceWithArrayOfResources(): void
     {
-        $hal = new Hal('http://example.com/');
+        $hal  = new Hal('http://example.com/');
         $res1 = new Hal('/resource/1', array('field1' => '1'));
         $res2 = new Hal('/resource/2', array('field1' => '2'));
         $hal->setResource('resource', array($res1, $res2));
 
         $resource = json_decode($hal->asJson());
         $this->assertInstanceOf('StdClass', $resource->_embedded);
-        $this->assertInternalType('array', $resource->_embedded->resource);
+        $this->assertIsArray($resource->_embedded->resource);
         $this->assertEquals($resource->_embedded->resource[0]->field1, '1');
         $this->assertEquals($resource->_embedded->resource[1]->field1, '2');
     }
 
-    public function testSetResourceThrowsIfNotPassedAHalOrArray()
+    public function testSetResourceThrowsIfNotPassedHalOrArray(): void
     {
         $this->setExpectedException('\InvalidArgumentException', '$resource should be of type array or Nocarrier\Hal');
         $hal = new Hal('http://example.com/');
-        $hal->setResource('resource', new \stdClass());
+        $hal->setResource('resource', new stdClass());
     }
 
-    public function testSetResourceJsonResponse()
+    public function testSetResourceJsonResponse(): void
     {
         $hal = new Hal('http://example.com/');
         $res = new Hal('/resource/1', array('field1' => 'value1', 'field2' => 'value2'));
@@ -650,21 +649,21 @@ EOD;
         $this->assertEquals($resource->_embedded->resource->field2, 'value2');
     }
 
-    public function testSetResourceXmlResponse()
+    public function testSetResourceXmlResponse(): void
     {
         $hal = new Hal('http://example.com/');
         $res = new Hal('/resource/1', array('field1' => 'value1', 'field2' => 'value2'));
         $hal->setResource('resource', $res);
 
-        $result = new \SimpleXmlElement($hal->asXml());
+        $result = new SimpleXmlElement($hal->asXml());
         $this->assertEquals('/resource/1', $result->resource->attributes()->href);
         $this->assertEquals('value1', $result->resource->field1);
         $this->assertEquals('value2', $result->resource->field2);
     }
 
-    public function testHalJsonDecodeWithCollectionOfEmbeddedItems()
+    public function testHalJsonDecodeWithCollectionOfEmbeddedItems(): void
     {
-        $sample = <<<JSON
+        $sample    = <<<JSON
         {
             "_links":{
                 "self":{"href":"http:\/\/example.com\/"}
@@ -692,9 +691,9 @@ JSON;
         $this->assertEquals('value2', $resources['item'][1]->getData('key'));
     }
 
-    public function testHalJsonDecodeWithSingleEmbeddedItem()
+    public function testHalJsonDecodeWithSingleEmbeddedItem(): void
     {
-        $sample = <<<JSON
+        $sample    = <<<JSON
         {
             "_links":{
                 "self":{"href":"http:\/\/example.com\/"}
@@ -715,43 +714,41 @@ JSON;
         $this->assertEquals('value', $data['key']);
     }
 
-    public function testGetFirstResourceReturnsSingleItem()
+    public function testGetFirstResourceReturnsSingleItem(): void
     {
         $hal = new Hal('http://example.com/');
         $res = new Hal('/resource/1', array('field1' => 'value1', 'field2' => 'value2'));
         $hal->setResource('resource', $res);
 
-        $this->assertEquals($res, $hal->getFirstResource("resource"));
+        $this->assertEquals($res, $hal->getFirstResource('resource'));
     }
 
-    public function testGetFirstResourceReturnsFirstOfMultipleItems()
+    public function testGetFirstResourceReturnsFirstOfMultipleItems(): void
     {
-        $hal = new Hal('http://example.com/');
+        $hal  = new Hal('http://example.com/');
         $res1 = new Hal('/resource/1', array('field1' => 'value1', 'field2' => 'value2'));
         $res2 = new Hal('/resource/2', array('field2' => 'value2', 'field2' => 'value2'));
         $hal->addResource('resource', $res1);
         $hal->addResource('resource', $res2);
 
-        $this->assertEquals($res1, $hal->getFirstResource("resource"));
+        $this->assertEquals($res1, $hal->getFirstResource('resource'));
     }
 
-    /**
-     * @expectedException RuntimeException
-     */
-    public function testHalFromJsonThrowsExceptionOnInvalidJSON()
+    public function testHalFromJsonThrowsExceptionOnInvalidJson(): void
     {
+        $this->expectException(RuntimeException::class);
         $invalidJson = 'foo';
         Hal::fromJson($invalidJson);
     }
 
-    public function testCanDefineThatAttributesShouldNotBeStripped()
+    public function testCanDefineThatAttributesShouldNotBeStripped(): void
     {
         $hal = new Hal('http://example.com/');
         $hal->setShouldStripAttributes(false);
         $this->assertEquals(false, $hal->getShouldStripAttributes());
     }
 
-    public function testStripAttributeMarkersIsNotCalledWhenRenderingWithStripAttributesSetToFalse()
+    public function testStripAttributeMarkersIsNotCalledWhenRenderingWithStripAttributesSetToFalse(): void
     {
         $hal = new Hal('http://example.com/', array('@xml:key' => 'value'));
         $hal->setShouldStripAttributes(false);
@@ -759,7 +756,7 @@ JSON;
         $this->assertEquals('value', $json->{'@xml:key'});
     }
 
-    public function testStripAttributeMarkersIsNotCalledWhenRenderingFromJSON()
+    public function testStripAttributeMarkersIsNotCalledWhenRenderingFromJson(): void
     {
         $sample = <<<JSON
 {
@@ -771,28 +768,21 @@ JSON;
     }
 }
 JSON;
-        $hal = JsonHalFactory::fromJson(new Hal(), $sample);
-        $json = json_decode($hal->asJson(true));
+        $hal    = JsonHalFactory::fromJson(new Hal(), $sample);
+        $json   = json_decode($hal->asJson(true));
         $this->assertEquals('value', $json->{'@xml:key'});
     }
 
-    public function testEmbeddingResourceWithSingleElement()
+    public function testEmbeddingResourceWithSingleElement(): void
     {
         $hal = new Hal();
 
         $hal->setResource(
             'foo',
-            (new Hal())->setResource('bar', new Hal())
+            (new Hal())->setResource('bar', new Hal()),
         );
 
         $json = json_decode($hal->asJson());
-        $this->assertInternalType('array', $json->_embedded->foo->_embedded->bar);
-    }
-
-    public function testErrorAddResource()
-    {
-        $this->setExpectedException('InvalidArgumentException');
-        $hal = new Hal();
-        $hal->addResource(new Hal());
+        $this->assertIsArray($json->_embedded->foo->_embedded->bar);
     }
 }

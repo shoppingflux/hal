@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of the Hal library
  *
@@ -9,6 +10,7 @@
  *
  * @package Nocarrier
  */
+
 namespace Nocarrier;
 
 /**
@@ -22,11 +24,8 @@ interface HalRenderer
     /**
      * Render the Hal resource in the appropriate form.
      *
-     * Returns a string representation of the resource.
-     *
-     * @param \Nocarrier\Hal $resource
-     * @param boolean $pretty
-     * @param boolean $encode
+     * Returns a string (with $encode=true) or array (with $encode=false)
+     * representation of the resource.
      */
-    public function render(Hal $resource, $pretty, $encode);
+    public function render(Hal $resource, bool $pretty, bool $encode): mixed;
 }

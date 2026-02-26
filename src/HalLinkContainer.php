@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of the Hal library
  *
@@ -12,24 +13,24 @@
 
 namespace Nocarrier;
 
+use ArrayObject;
+
 /**
  * The HalLinkContainer class
  *
  * @package Nocarrier
  * @author Ben Longden <ben@nocarrier.co.uk>
  */
-class HalLinkContainer extends \ArrayObject
+class HalLinkContainer extends ArrayObject
 {
     /**
      * Retrieve a link from the container by rel. Also resolve any curie links
      * if they are set.
      *
-     * @param string $rel
-     *   The link relation required.
      * @return array|bool
      *   Link if found. Otherwise false.
      */
-    public function get($rel)
+    public function get(string $rel)
     {
         if (array_key_exists($rel, (array) $this)) {
             return $this[$rel];
@@ -37,12 +38,14 @@ class HalLinkContainer extends \ArrayObject
 
         if (isset($this['curies'])) {
             foreach ($this['curies'] as $link) {
-                $prefix = strstr($link->getUri(), '{rel}', true);
-                if (strpos($rel, $prefix) === 0) {
+                $prefix = strstr((string) $link->getUri(), '{rel}', true);
+
+                if (str_starts_with($rel, $prefix)) {
                     // looks like it is
                     $shortrel = substr($rel, strlen($prefix));
-                    $attrs = $link->getAttributes();
-                    $curie = "{$attrs['name']}:$shortrel";
+                    $attrs    = $link->getAttributes();
+                    $curie    = "{$attrs['name']}:$shortrel";
+
                     if (isset($this[$curie])) {
                         return $this[$curie];
                     }

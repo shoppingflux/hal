@@ -13,13 +13,19 @@
   }
   ],
   "require": {
-    "php": ">=5.3.0",
+    "php": ">=8.2",
     "psr/link": "~1.0"
   },
   "require-dev": {
-    "phpunit/phpunit": "^7.0 || ^6.4 || ^5.7 || ^4.8.35"
+    "overtrue/phplint": "^9.4",
+    "phpstan/phpstan": "^2.1",
+    "phpunit/phpunit": "^11.0",
+    "rector/rector": "^2.2",
+    "roave/security-advisories": "dev-latest",
+    "laminas/laminas-servicemanager": "^4.5",
+    "shoppingfeed/coding-style-php": "^2.0",
+    "symfony/cache": "^7.3"
   },
-  "minimum-stability": "dev",
   "autoload": {
     "psr-4": {
       "Nocarrier\\": "src"
@@ -27,10 +33,31 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "Nocarrier\\Tests\\": "tests/Hal"
+      "Nocarrier\\Test\\": "test/Hal"
     }
   },
+  "scripts": {
+    "phpunit": "vendor/bin/phpunit",
+    "phpcs": "vendor/bin/sfcs src test --progress -vvv",
+    "phpcsfix": "vendor/bin/sfcs src test --progress -vvv --autofix",
+    "phpstan": "vendor/bin/phpstan analyse",
+    "phplint": "vendor/bin/phplint src --cache=build/phplint.cache",
+    "rector": "vendor/bin/rector process --ansi",
+    "test": [
+      "@phplint",
+      "@phpunit",
+      "@phpstan",
+      "@phpcs"
+    ],
+    "codefix": [
+      "@rector",
+      "@phpcsfix",
+      "@test"
+    ]
+  },
   "config": {
-    "bin-dir": "bin"
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
   }
 }

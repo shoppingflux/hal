@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of the Hal library
  *
@@ -10,7 +11,7 @@
  * @package Nocarrier
  */
 
-namespace Nocarrier\Tests;
+namespace Nocarrier\Test;
 
 use PHPUnit\Framework\TestCase as BaseTestCase;
 
@@ -21,9 +22,11 @@ class TestCase extends BaseTestCase
         if (method_exists($this, 'expectException')) {
             // PHPUnit 5+
             $this->expectException($exception);
+
             if ($exceptionMessage !== '') {
                 $this->expectExceptionMessage($exceptionMessage);
             }
+
             if ($exceptionCode !== null) {
                 $this->expectExceptionCode($exceptionCode);
             }

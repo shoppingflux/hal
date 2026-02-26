@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of the Hal library
  *
@@ -12,21 +13,20 @@
 
 namespace Nocarrier;
 
+use InvalidArgumentException;
+use Nocarrier\HalLinkContainer;
+use RuntimeException;
+use SimpleXMLElement;
+use Traversable;
+
 /**
  * The Hal document class
  *
  * @package Nocarrier
  * @author Ben Longden <ben@nocarrier.co.uk>
  */
-class Hal
+final class Hal
 {
-    /**
-     * The uri represented by this representation.
-     *
-     * @var string
-     */
-    protected $uri;
-
     /**
      * The data for this resource. An associative array of key value pairs.
      *
@@ -41,10 +41,8 @@ class Hal
 
     /**
      * An array of embedded Hal objects representing embedded resources.
-     *
-     * @var array
      */
-    protected $resources = array();
+    protected array $resources = [];
 
     /**
      * A collection of \Nocarrier\HalLink objects keyed by the link relation to
@@ -56,28 +54,26 @@ class Hal
      *
      * @var array
      */
-    protected $links = null;
+    protected HalLinkContainer $links;
 
     /**
      * A list of rel types for links that will force a rel type to array for one element
      *
-     * @var array
+     * @var list<string>
      */
-    protected $arrayLinkRels = array();
+    protected array $arrayLinkRels = [];
 
     /**
      * A list of rel types for links that will force a rel type to array for one element
      *
-     * @var array
+     * @var list<string>
      */
-    protected $arrayResourceRels = array();
+    protected array $arrayResourceRels = [];
 
     /**
      * Whether xml attribute markers should be stripped when rendering
-     *
-     * @var string
      */
-    protected $shouldStripAttributes = true;
+    protected bool $shouldStripAttributes = true;
 
     /**
      * Construct a new Hal object from an array of data. You can markup the
@@ -100,14 +96,18 @@ class Hal
      *
      * @throws \RuntimeException
      */
-    public function __construct($uri = null, $data = array())
-    {
-        $this->uri = $uri;
-
-        if (!is_array($data) && !$data instanceof \Traversable) {
-            throw new \RuntimeException(
-                'The $data parameter must be an array or an object implementing the Traversable interface.');
+    public function __construct(/**
+         * The uri represented by this representation.
+         */
+        protected $uri = null,
+        $data = [],
+    ) {
+        if (! is_array($data) && ! $data instanceof Traversable) {
+            throw new RuntimeException(
+                'The $data parameter must be an array or an object implementing the Traversable interface.',
+            );
         }
+
         $this->data = $data;
 
         $this->links = new HalLinkContainer();
@@ -115,43 +115,28 @@ class Hal
 
     /**
      * Decode a application/hal+json document into a Nocarrier\Hal object.
-     *
-     * @param string $data
-     * @param int $depth
-     * @static
-     * @access public
-     * @return \Nocarrier\Hal
      */
-    public static function fromJson($data, $depth = 0)
+    public static function fromJson(string $data, int $depth = 0): Hal
     {
-        return JsonHalFactory::fromJson(new static(), $data, $depth);
+        return JsonHalFactory::fromJson(new self(), $data, $depth);
     }
 
     /**
      * Decode a application/hal+xml document into a Nocarrier\Hal object.
-     *
-     * @param int $depth
-     *
-     * @static
-     * @access public
-     * @return \Nocarrier\Hal
      */
-    public static function fromXml($data, $depth = 0)
+    public static function fromXml(string|SimpleXMLElement $data, int $depth = 0): Hal
     {
-        return XmlHalFactory::fromXml(new static(), $data, $depth);
+        return XmlHalFactory::fromXml(new self(), $data, $depth);
     }
 
     /**
      * Add a link to the resource, identified by $rel, located at $uri.
      *
-     * @param string $rel
-     * @param string $uri
-     * @param array $attributes
+     * @param array<string, string>|array<string, bool> $attributes
      *   Other attributes, as defined by HAL spec and RFC 5988.
      * @param bool $forceArray whether to force a rel to be an array if it has only one entry
-     * @return \Nocarrier\Hal
      */
-    public function addLink($rel, $uri, array $attributes = array(), $forceArray = false)
+    public function addLink(string $rel, string $uri, array $attributes = [], bool $forceArray = false): self
     {
         return $this->addHalLink($rel, new HalLink($uri, $attributes), $forceArray);
     }
@@ -159,12 +144,9 @@ class Hal
     /**
      * Add a link instance to the resource, identified by $rel.
      *
-     * @param string $rel
-     * @param HalLink $link
      * @param bool $forceArray whether to force a rel to be an array if it has only one entry
-     * @return \Nocarrier\Hal
      */
-    public function addHalLink($rel, HalLink $link, $forceArray = false)
+    public function addHalLink(string $rel, HalLink $link, bool $forceArray = false): self
     {
         $this->links[$rel][] = $link;
 
@@ -177,20 +159,9 @@ class Hal
 
     /**
      * Add an embedded resource, identified by $rel and represented by $resource.
-     *
-     * @param string $rel
-     * @param \Nocarrier\Hal $resource
-     *
-     * @return \Nocarrier\Hal
      */
-    public function addResource($rel, \Nocarrier\Hal $resource = null, $forceArray = true)
+    public function addResource(string $rel, Hal $resource = null, bool $forceArray = true): self
     {
-        if (!is_string($rel)) {
-            throw new \InvalidArgumentException(
-                "Argument 1 passed to Hal::addResource() must be a string describing the resource relationship"
-            );
-        }
-
         $this->resources[$rel][] = $resource;
 
         if ($forceArray) {
@@ -206,10 +177,9 @@ class Hal
      * Using this method signifies that $rel will only ever be a single object
      * (only really relevant to JSON rendering)
      *
-     * @param string $rel
      * @param Hal $resource
      */
-    public function setResource($rel, $resource)
+    public function setResource(string $rel, $resource): self
     {
         if (is_array($resource)) {
             foreach ($resource as $r) {
@@ -219,8 +189,8 @@ class Hal
             return $this;
         }
 
-        if (!($resource instanceof Hal)) {
-            throw new \InvalidArgumentException('$resource should be of type array or Nocarrier\Hal');
+        if (! ($resource instanceof Hal)) {
+            throw new InvalidArgumentException('$resource should be of type array or Nocarrier\Hal');
         }
 
         $this->resources[$rel][] = $resource;
@@ -231,9 +201,10 @@ class Hal
     /**
      * Set resource's data
      */
-    public function setData(Array $data = null)
+    public function setData(array $data = null): self
     {
         $this->data = $data;
+
         return $this;
     }
 
@@ -246,7 +217,7 @@ class Hal
     public function getData($key = null)
     {
         if ($key) {
-            return isset($this->data[$key]) ? $this->data[$key] : array();
+            return $this->data[$key] ?? [];
         }
 
         return $this->data;
@@ -258,7 +229,7 @@ class Hal
      *
      * @return array A collection of \Nocarrier\HalLink
      */
-    public function getLinks()
+    public function getLinks(): HalLinkContainer
     {
         return $this->links;
     }
@@ -267,27 +238,24 @@ class Hal
      * Lookup and return an array of HalLink objects for a given relation.
      * Will also resolve CURIE rels if required.
      *
-     * @param string $rel The link relation required
      * @return array|bool
      *   Array of HalLink objects if found. Otherwise false.
      */
-    public function getLink($rel)
+    public function getLink(string $rel)
     {
         return $this->links->get($rel);
     }
 
     /**
      * Return an array of Nocarrier\Hal objected embedded in this one.
-     *
-     * @return array
+     * @return mixed[][]
      */
-    public function getResources()
+    public function getResources(): array
     {
-        $resources = array_map(function ($resource) {
-            return is_array($resource) ? $resource : array($resource);
-        }, $this->getRawResources());
-
-        return $resources;
+        return array_map(
+            fn($resource): array => is_array($resource) ? $resource : [$resource],
+            $this->getRawResources(),
+        );
     }
 
     /**
@@ -299,11 +267,7 @@ class Hal
     {
         $resources = $this->getResources();
 
-        if (isset($resources[$rel])) {
-            return $resources[$rel];
-        }
-
-        return null;
+        return $resources[$rel] ?? null;
     }
 
     /**
@@ -355,9 +319,10 @@ class Hal
     /**
      * Set resource's URI
      */
-    public function setUri($uri)
+    public function setUri($uri): self
     {
         $this->uri = $uri;
+
         return $this;
     }
 
@@ -379,7 +344,7 @@ class Hal
      *   Enable pretty-printing.
      * @param bool $encode
      *   Run through json_encode
-     * @return string
+     * @return string|array
      */
     public function asJson($pretty = false, $encode = true)
     {
@@ -409,15 +374,10 @@ class Hal
      * e.g,
      * $hal->addCurie('acme', 'http://.../rels/{rel}');
      * $hal->addLink('acme:test', 'http://.../test');
-     *
-     * @param string $name
-     * @param string $uri
-     *
-     * @return \Nocarrier\Hal
      */
-    public function addCurie($name, $uri)
+    public function addCurie(string $name, string $uri): self
     {
-        return $this->addLink('curies', $uri, array('name' => $name, 'templated' => true));
+        return $this->addLink('curies', $uri, ['name' => $name, 'templated' => true]);
     }
 
     /**
@@ -436,15 +396,15 @@ class Hal
         return $this->arrayResourceRels;
     }
 
-    public function getShouldStripAttributes()
+    public function getShouldStripAttributes(): bool
     {
         return $this->shouldStripAttributes;
     }
 
-    public function setShouldStripAttributes($shouldStripAttributes)
+    public function setShouldStripAttributes($shouldStripAttributes): self
     {
         $this->shouldStripAttributes = $shouldStripAttributes;
+
         return $this;
     }
-
 }

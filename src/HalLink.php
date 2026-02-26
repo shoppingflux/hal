@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of the Hal library
  *
@@ -9,7 +10,10 @@
  *
  * @package Nocarrier
  */
+
 namespace Nocarrier;
+
+use Stringable;
 
 /**
  * The HalLink class
@@ -17,32 +21,8 @@ namespace Nocarrier;
  * @package Nocarrier
  * @author Ben Longden <ben@nocarrier.co.uk>
  */
-class HalLink
+class HalLink implements Stringable
 {
-    /**
-     * The URI represented by this HalLink.
-     *
-     * @var string
-     */
-    protected $uri;
-
-    /**
-     * Any attributes on this link.
-     *
-     * array(
-     *  'templated' => 0,
-     *  'type' => 'application/hal+json',
-     *  'deprecation' => 1,
-     *  'name' => 'latest',
-     *  'profile' => 'http://.../profile/order',
-     *  'title' => 'The latest order',
-     *  'hreflang' => 'en'
-     * )
-     *
-     * @var array
-     */
-    protected $attributes;
-
     /**
      * The \Nocarrier\HalLink object.
      *
@@ -53,18 +33,32 @@ class HalLink
      * @param array $attributes
      *   Any additional attributes.
      */
-    public function __construct($uri, $attributes)
-    {
-        $this->uri = $uri;
-        $this->attributes = $attributes;
+    public function __construct(
+        /**
+         * The URI represented by this HalLink.
+         */
+        protected string $uri,
+        /**
+         * Any attributes on this link.
+         *
+         * array(
+         *  'templated' => 0,
+         *  'type' => 'application/hal+json',
+         *  'deprecation' => 1,
+         *  'name' => 'latest',
+         *  'profile' => 'http://.../profile/order',
+         *  'title' => 'The latest order',
+         *  'hreflang' => 'en'
+         * )
+         */
+        protected array $attributes,
+    ) {
     }
 
     /**
      * Return the URI from this link.
-     *
-     * @return string
      */
-    public function getUri()
+    public function getUri(): string
     {
         return $this->uri;
     }
@@ -74,7 +68,7 @@ class HalLink
      *
      * return array
      */
-    public function getAttributes()
+    public function getAttributes(): array
     {
         return $this->attributes;
     }
@@ -84,7 +78,7 @@ class HalLink
      *
      * return string
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->uri;
     }

@@ -2,60 +2,60 @@
 
 namespace Nocarrier;
 
+use Nocarrier\Hal;
+use RuntimeException;
+
 class JsonHalFactory
 {
     /**
      * Decode a application/hal+json document into a Nocarrier\Hal object.
-     *
-     * @param string $text
-     * @param int $depth
-     * @static
-     * @access public
-     * @return \Nocarrier\Hal
      */
-    public static function fromJson(Hal $hal, $text, $depth = 0)
+    public static function fromJson(Hal $hal, string $text, int $depth = 0): Hal
     {
-        list($uri, $links, $embedded, $data) = self::prepareJsonData($text);
+        [$uri, $links, $embedded, $data] = self::prepareJsonData($text);
         $hal->setUri($uri)->setData($data);
         self::addJsonLinkData($hal, $links);
 
         if ($depth > 0) {
             self::setEmbeddedResources($hal, $embedded, $depth);
         }
+
         $hal->setShouldStripAttributes(false);
+
         return $hal;
     }
 
     /**
-     * @param string $text
+     * @return array<int, mixed>
      */
-    private static function prepareJsonData($text)
+    private static function prepareJsonData(string $text): array
     {
         $data = json_decode($text, true);
-        if (json_last_error() != JSON_ERROR_NONE) {
-            throw new \RuntimeException('The $text parameter must be valid JSON');
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new RuntimeException('The $text parameter must be valid JSON');
         }
-        $uri = isset($data['_links']['self']['href']) ? $data['_links']['self']['href'] : "";
-        unset ($data['_links']['self']);
 
-        $links = isset($data['_links']) ? $data['_links'] : array();
-        unset ($data['_links']);
+        $uri = $data['_links']['self']['href'] ?? '';
+        unset($data['_links']['self']);
 
-        $embedded = isset($data['_embedded']) ? $data['_embedded'] : array();
-        unset ($data['_embedded']);
+        $links = $data['_links'] ?? [];
+        unset($data['_links']);
 
-        return array($uri, $links, $embedded, $data);
+        $embedded = $data['_embedded'] ?? [];
+        unset($data['_embedded']);
+
+        return [$uri, $links, $embedded, $data];
     }
 
     /**
-     * @param Hal $hal
-     * @param array $links
+     * @param array<int, mixed> $links
      */
-    private static function addJsonLinkData($hal, $links)
+    private static function addJsonLinkData(Hal $hal, array $links): void
     {
         foreach ($links as $rel => $links) {
-            if (!isset($links[0]) or !is_array($links[0])) {
-                $links = array($links);
+            if (! isset($links[0]) || ! is_array($links[0])) {
+                $links = [$links];
             }
 
             foreach ($links as $link) {
@@ -66,21 +66,17 @@ class JsonHalFactory
         }
     }
 
-    /**
-     * @param Hal $hal
-     * @param array $embedded
-     * @param integer $depth
-     */
-    private static function setEmbeddedResources(Hal $hal, $embedded, $depth)
+    private static function setEmbeddedResources(Hal $hal, array $embedded, int $depth): void
     {
         foreach ($embedded as $rel => $embed) {
             $isIndexed = array_values($embed) === $embed;
-            $className = get_class($hal);
-            if (!$isIndexed) {
-                $hal->setResource($rel, self::fromJson(new $className, json_encode($embed), $depth - 1));
+            $className = $hal::class;
+
+            if (! $isIndexed) {
+                $hal->setResource($rel, self::fromJson(new $className(), json_encode($embed), $depth - 1));
             } else {
                 foreach ($embed as $resource) {
-                    $hal->addResource($rel, self::fromJson(new $className, json_encode($resource), $depth - 1));
+                    $hal->addResource($rel, self::fromJson(new $className(), json_encode($resource), $depth - 1));
                 }
             }
         }
