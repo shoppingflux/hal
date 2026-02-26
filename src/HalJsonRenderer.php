@@ -13,6 +13,8 @@
 
 namespace Nocarrier;
 
+use Nocarrier\Hal;
+
 /**
  * HalJsonRenderer
  *
@@ -42,21 +44,18 @@ class HalJsonRenderer implements HalRenderer
     /**
      * Return an array (compatible with the hal+json format) representing
      * associated links.
-     *
-     * @param mixed $uri
-     * @param iterable<string, mixed> $links
-     * @param list<string>
      */
-    protected function linksForJson($uri, iterable $container, array $arrayLinkRels): array
+    protected function linksForJson(Hal $resource): array
     {
+        $uri  = $resource->getUri();
         $data = [];
 
         if (null !== $uri) {
             $data['self'] = ['href' => $uri];
         }
 
-        foreach ($container as $rel => $links) {
-            if (count($links) === 1 && $rel !== 'curies' && ! in_array($rel, $arrayLinkRels, true)) {
+        foreach ($resource->getLinks() as $rel => $links) {
+            if (count($links) === 1 && $rel !== 'curies' && ! $resource->isArrayLink($rel)) {
                 $data[$rel] = ['href' => $links[0]->getUri()];
 
                 foreach ($links[0]->getAttributes() as $attribute => $value) {
@@ -135,9 +134,9 @@ class HalJsonRenderer implements HalRenderer
      * Return an array (compatible with the hal+json format) representing the
      * complete response.
      */
-    protected function arrayForJson(Hal $resource = null): mixed
+    protected function arrayForJson(?Hal $resource = null): mixed
     {
-        if ($resource == null) {
+        if (! $resource instanceof Hal) {
             return [];
         }
 
@@ -147,14 +146,14 @@ class HalJsonRenderer implements HalRenderer
             $data = $this->stripAttributeMarker($data);
         }
 
-        $links = $this->linksForJson($resource->getUri(), $resource->getLinks(), $resource->getArrayLinkRels());
+        $links = $this->linksForJson($resource);
 
         if (count($links)) {
             $data['_links'] = $links;
         }
 
         foreach ($resource->getRawResources() as $rel => $resources) {
-            if (count($resources) === 1 && ! in_array($rel, $resource->getArrayResourceRels())) {
+            if (count($resources) === 1 && ! $resource->isArrayResource($rel)) {
                 $resources = $resources[0];
             }
 

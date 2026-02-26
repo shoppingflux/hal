@@ -151,6 +151,16 @@ final class Hal
     }
 
     /**
+     * Add an embedded resource, identified by $rel and represented by $resource.
+     */
+    public function addIndexedResource(string $rel, int|string $index, Hal $resource): self
+    {
+        $this->resources[$rel][$index] = $resource;
+
+        return $this;
+    }
+
+    /**
      * Set an embedded resource, identified by $rel and represented by $resource
      *
      * Using this method signifies that $rel will only ever be a single object
@@ -236,13 +246,11 @@ final class Hal
     /**
      * Return an array of Nocarrier\Hal objected embedded in this one.
      *
-     * @return Hal
+     * @return ?list<Hal>
      */
-    public function getResource($rel)
+    public function getRelResources(string $rel): ?array
     {
-        $resources = $this->getResources();
-
-        return $resources[$rel] ?? null;
+        return $this->getResources()[$rel] ?? null;
     }
 
     /**
@@ -255,40 +263,6 @@ final class Hal
     public function getRawResources(): array
     {
         return $this->resources;
-    }
-
-    /**
-     * Get the first resource for a given rel. Useful if you're only expecting
-     * one resource, or you don't care about subsequent resources
-     *
-     * @return Hal
-     */
-    public function getFirstResource($rel)
-    {
-        $resource = $this->getResource($rel);
-
-        if ($resource) {
-            return $resource[0];
-        }
-
-        return null;
-    }
-
-    /**
-     * Get the first link for a given rel. Useful if you're only expecting
-     * one link, or you don't care about subsequent links
-     *
-     * @return HalLink
-     */
-    public function getFirstLink(string $rel): ?HalLink
-    {
-        $link = $this->getLink($rel);
-
-        if ($link) {
-            return $link[0];
-        }
-
-        return null;
     }
 
     /**
@@ -314,32 +288,19 @@ final class Hal
     /**
      * Return the current object in a application/hal+json format (links and
      * resources).
-     *
-     * @param bool $pretty
-     *   Enable pretty-printing.
-     * @param bool $encode
-     *   Run through json_encode
-     * @return string|array
      */
     public function asJson(bool $pretty = false, bool $encode = true): string|array|false
     {
-        $renderer = new HalJsonRenderer();
-
-        return $renderer->render($this, $pretty, $encode);
+        return (new HalJsonRenderer())->render($this, $pretty, $encode);
     }
 
     /**
      * Return the current object in a application/hal+xml format (links and
      * resources).
-     *
-     * @param bool $pretty Enable pretty-printing
-     * @return string
      */
     public function asXml(bool $pretty = false): string|false
     {
-        $renderer = new HalXmlRenderer();
-
-        return $renderer->render($this, $pretty);
+        return (new HalXmlRenderer())->render($this, $pretty);
     }
 
     /**
@@ -357,20 +318,18 @@ final class Hal
 
     /**
      * Get a list of rel types for links that will be forced to an array for one element
-     * @return list<string>
      */
-    public function getArrayLinkRels(): array
+    public function isArrayLink(string $rel): bool
     {
-        return $this->arrayLinkRels;
+        return in_array($rel, $this->arrayLinkRels, true);
     }
 
     /**
-     * Get a list of rel types for resources that will be forced to an array for one element
-     * @return list<string>
+     * Check if rel type should be forced to an array for one element
      */
-    public function getArrayResourceRels(): array
+    public function isArrayResource(string $rel): bool
     {
-        return $this->arrayResourceRels;
+        return in_array($rel, $this->arrayResourceRels, true);
     }
 
     public function getShouldStripAttributes(): bool
