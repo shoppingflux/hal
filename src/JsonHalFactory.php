@@ -2,7 +2,6 @@
 
 namespace Nocarrier;
 
-use Nocarrier\Hal;
 use RuntimeException;
 
 class JsonHalFactory

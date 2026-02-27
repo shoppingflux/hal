@@ -17,6 +17,7 @@ use ArrayIterator;
 use Nocarrier\Hal;
 use Nocarrier\JsonHalFactory;
 use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SimpleXmlElement;
 

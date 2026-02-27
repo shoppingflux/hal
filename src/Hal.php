@@ -13,8 +13,6 @@
 
 namespace Nocarrier;
 
-use Nocarrier\HalLink;
-use Nocarrier\HalLinkContainer;
 use SimpleXMLElement;
 
 /**
@@ -38,22 +36,20 @@ final class Hal
      * array(
      *     'next' => [HalLink]
      * )
-     *
-     * @var array
      */
     private HalLinkContainer $links;
 
     /**
      * A list of rel types for links that will force a rel type to array for one element
      *
-     * @var list<string>
+     * @var array<string, true>
      */
     private array $arrayLinkRels = [];
 
     /**
      * A list of rel types for links that will force a rel type to array for one element
      *
-     * @var list<string>
+     * @var array<string, true>
      */
     private array $arrayResourceRels = [];
 
@@ -78,15 +74,13 @@ final class Hal
      * array('value' => 'example')) will yield <x>example</x> in the XML
      * representation. This will not affect the JSON representation.
      *
-     * @param mixed $uri
+     * @param ?string $uri The uri represented by this representation
      * @param array|Traversable $data
      *
      * @throws \RuntimeException
      */
-    public function __construct(/**
-         * The uri represented by this representation.
-         */
-        private $uri = null,
+    public function __construct(
+        private ?string $uri = null,
         private iterable $data = [],
     ) {
         $this->links = new HalLinkContainer();
@@ -130,7 +124,7 @@ final class Hal
         $this->links[$rel][] = $link;
 
         if ($forceArray) {
-            $this->arrayLinkRels[] = $rel;
+            $this->arrayLinkRels[$rel] = true;
         }
 
         return $this;
@@ -144,7 +138,7 @@ final class Hal
         $this->resources[$rel][] = $resource;
 
         if ($forceArray) {
-            $this->arrayResourceRels[] = $rel;
+            $this->arrayResourceRels[$rel] = true;
         }
 
         return $this;
@@ -156,6 +150,10 @@ final class Hal
     public function addIndexedResource(string $rel, int|string $index, Hal $resource): self
     {
         $this->resources[$rel][$index] = $resource;
+
+        if (! isset($this->arrayResourceRels[$rel])) {
+            $this->arrayResourceRels[$rel] = true;
+        }
 
         return $this;
     }
@@ -199,7 +197,7 @@ final class Hal
      * @param null|string data key
      * @return mixed Returns an array if no key is passed in, otherwise returns the data
      */
-    public function getData($key = null)
+    public function getData($key = null): mixed
     {
         if ($key) {
             return $this->data[$key] ?? [];
@@ -246,7 +244,7 @@ final class Hal
     /**
      * Return an array of Nocarrier\Hal objected embedded in this one.
      *
-     * @return ?list<Hal>
+     * @return ?array<int|string, Hal>
      */
     public function getRelResources(string $rel): ?array
     {
@@ -268,7 +266,7 @@ final class Hal
     /**
      * Set resource's URI
      */
-    public function setUri($uri): self
+    public function setUri(?string $uri): self
     {
         $this->uri = $uri;
 
@@ -277,10 +275,8 @@ final class Hal
 
     /**
      * Get resource's URI.
-     *
-     * @return mixed
      */
-    public function getUri()
+    public function getUri(): ?string
     {
         return $this->uri;
     }
@@ -321,7 +317,7 @@ final class Hal
      */
     public function isArrayLink(string $rel): bool
     {
-        return in_array($rel, $this->arrayLinkRels, true);
+        return isset($this->arrayLinkRels[$rel]);
     }
 
     /**
@@ -329,7 +325,7 @@ final class Hal
      */
     public function isArrayResource(string $rel): bool
     {
-        return in_array($rel, $this->arrayResourceRels, true);
+        return isset($this->arrayResourceRels[$rel]);
     }
 
     public function getShouldStripAttributes(): bool

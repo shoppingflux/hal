@@ -13,8 +13,6 @@
 
 namespace Nocarrier;
 
-use Nocarrier\Hal;
-
 /**
  * HalJsonRenderer
  *

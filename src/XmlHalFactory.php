@@ -11,7 +11,7 @@ class XmlHalFactory
     /**
      * Decode a application/hal+xml document into a Nocarrier\Hal object.
      *
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
     public static function fromXml(Hal $hal, SimpleXMLElement|string $data, int $depth = 0): Hal
     {

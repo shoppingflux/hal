@@ -33,7 +33,6 @@ class HalXmlRenderer implements HalRenderer
         }
 
         $this->linksForXml($doc, $resource->getLinks());
-
         $this->arrayToXml($resource->getData(), $doc);
 
         foreach ($resource->getResources() as $rel => $resources) {
@@ -101,7 +100,7 @@ class HalXmlRenderer implements HalRenderer
                 } elseif ($key === 'value' && count($data) === 1) {
                     $element[0] = $value;
                 } elseif (is_bool($value)) {
-                    $element->addChild($key, intval($value));
+                    $element->addChild($key, (int) $value);
                 } else {
                     $element->addChild($key, htmlspecialchars((string) $value, ENT_QUOTES));
                 }
