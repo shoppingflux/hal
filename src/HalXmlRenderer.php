@@ -13,6 +13,7 @@
 
 namespace Nocarrier;
 
+use RuntimeException;
 use SimpleXMLElement;
 
 /**
@@ -41,6 +42,10 @@ class HalXmlRenderer implements HalRenderer
 
         $dom = dom_import_simplexml($doc);
 
+        if (null === $dom->ownerDocument) {
+            throw new RuntimeException('Failed to convert SimpleXMLElement to DOMDocument');
+        }
+
         if ($pretty) {
             $dom->ownerDocument->preserveWhiteSpace = false;
             $dom->ownerDocument->formatOutput       = true;
@@ -50,13 +55,9 @@ class HalXmlRenderer implements HalRenderer
     }
 
     /**
-     * linksForXml
-     *
      * Add links in hal+xml format to a SimpleXmlElement object.
-     *
-     * @return void
      */
-    protected function linksForXml(SimpleXmlElement $doc, HalLinkContainer $container)
+    protected function linksForXml(SimpleXmlElement $doc, HalLinkContainer $container): void
     {
         foreach ($container as $rel => $links) {
             foreach ($links as $link) {
@@ -72,14 +73,10 @@ class HalXmlRenderer implements HalRenderer
     }
 
     /**
-     * arrayToXml
-     *
      * @param array $data
      * @param mixed $parent
-     * @access protected
-     * @return void
      */
-    protected function arrayToXml($data, SimpleXmlElement $element, $parent = null)
+    protected function arrayToXml($data, SimpleXmlElement $element, $parent = null): void
     {
         foreach ($data as $key => $value) {
             if (is_iterable($value)) {
@@ -111,8 +108,6 @@ class HalXmlRenderer implements HalRenderer
     }
 
     /**
-     * resourcesForXml
-     *
      * Add resources in hal+xml format (identified by $rel) to a
      * SimpleXmlElement object.
      *

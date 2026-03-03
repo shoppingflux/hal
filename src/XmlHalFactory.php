@@ -23,8 +23,8 @@ class XmlHalFactory
             }
         }
 
-        $children = $data->children();
-        $links    = clone $children->link;
+        $children      = $data->children();
+        $childrenLinks = clone $children->link;
         unset($children->link);
 
         $embedded = clone $children->resource;
@@ -33,7 +33,7 @@ class XmlHalFactory
         $hal->setUri((string) $data->attributes()->href);
         $hal->setData((array) $children);
 
-        foreach ($links as $links) {
+        foreach ($childrenLinks as $links) {
             if (! is_array($links)) {
                 $links = [$links];
             }
@@ -59,7 +59,7 @@ class XmlHalFactory
     /**
      * @return array<int, mixed>
      */
-    private static function extractKnownData($data): array
+    private static function extractKnownData(SimpleXMLElement $data): array
     {
         $attributes = (array) $data->attributes();
         $attributes = $attributes['@attributes'];

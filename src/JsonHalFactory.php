@@ -48,7 +48,7 @@ class JsonHalFactory
     }
 
     /**
-     * @param array<int, mixed> $container
+     * @param array<string, mixed> $container
      */
     private static function addJsonLinkData(Hal $hal, array $container): void
     {
@@ -72,12 +72,17 @@ class JsonHalFactory
             $className = $hal::class;
 
             if (! $isIndexed) {
-                $hal->setResource($rel, self::fromJson(new $className(), json_encode($embed), $depth - 1));
+                $hal->setResource($rel, self::fromJson(new $className(), self::jsonEncode($embed), $depth - 1));
             } else {
                 foreach ($embed as $resource) {
-                    $hal->addResource($rel, self::fromJson(new $className(), json_encode($resource), $depth - 1));
+                    $hal->addResource($rel, self::fromJson(new $className(), self::jsonEncode($resource), $depth - 1));
                 }
             }
         }
+    }
+
+    private static function jsonEncode(mixed $data): string
+    {
+        return json_encode($data, JSON_THROW_ON_ERROR);
     }
 }

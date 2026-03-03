@@ -20,6 +20,8 @@ use ArrayObject;
  *
  * @package Nocarrier
  * @author Ben Longden <ben@nocarrier.co.uk>
+ *
+ * @extends ArrayObject<string, list<HalLink>>
  */
 class HalLinkContainer extends ArrayObject
 {
@@ -27,10 +29,9 @@ class HalLinkContainer extends ArrayObject
      * Retrieve a link from the container by rel. Also resolve any curie links
      * if they are set.
      *
-     * @return list<HalLink>|false
-     *   Link if found. Otherwise false.
+     * @return ?list<HalLink> Link if found. Otherwise null.
      */
-    public function get(string $rel): array|false
+    public function get(string $rel): ?array
     {
         if (array_key_exists($rel, (array) $this)) {
             return $this[$rel];
@@ -38,7 +39,7 @@ class HalLinkContainer extends ArrayObject
 
         if (isset($this['curies'])) {
             foreach ($this['curies'] as $link) {
-                $prefix = strstr((string) $link->getUri(), '{rel}', true);
+                $prefix = (string) strstr((string) $link->getUri(), '{rel}', true);
 
                 if (str_starts_with($rel, $prefix)) {
                     // looks like it is
@@ -53,6 +54,6 @@ class HalLinkContainer extends ArrayObject
             }
         }
 
-        return false;
+        return null;
     }
 }

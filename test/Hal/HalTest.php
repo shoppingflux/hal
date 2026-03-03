@@ -539,7 +539,7 @@ EOD;
     public function testGetLinkReturnsFalseOnFailure(): void
     {
         $x = new Hal('/orders');
-        $this->assertFalse($x->getLink('test'));
+        $this->assertNull($x->getLink('test'));
     }
 
     public function testJsonEmptyEmbeddedCollection(): void
@@ -586,7 +586,7 @@ EOD;
         $this->assertEquals('http://test', $data->_links->testrel->href);
     }
 
-    public function testDataCanBeTraversable(): void
+    public function testDataCanBeArrayAccess(): void
     {
         $it = new ArrayIterator(array('traversable' => new ArrayIterator(array('key' => 'value'))));
         $x  = new Hal('', $it);

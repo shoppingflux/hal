@@ -26,7 +26,7 @@ class HalJsonRenderer implements HalRenderer
     {
         $options = 0;
 
-        if (version_compare(PHP_VERSION, '5.4.0') >= 0 && $pretty) {
+        if ($pretty) {
             $options = JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT;
         }
 

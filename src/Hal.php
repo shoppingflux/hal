@@ -13,6 +13,8 @@
 
 namespace Nocarrier;
 
+use ArrayAccess;
+use DateInterval;
 use SimpleXMLElement;
 
 /**
@@ -20,6 +22,8 @@ use SimpleXMLElement;
  *
  * @package Nocarrier
  * @author Ben Longden <ben@nocarrier.co.uk>
+ *
+ * @phpstan-type Data array<string, mixed>|ArrayAccess<string, mixed>
  */
 final class Hal
 {
@@ -75,13 +79,13 @@ final class Hal
      * representation. This will not affect the JSON representation.
      *
      * @param ?string $uri The uri represented by this representation
-     * @param array|Traversable $data
+     * @param Data $data The data to be represented by this representation
      *
      * @throws \RuntimeException
      */
     public function __construct(
         private ?string $uri = null,
-        private iterable $data = [],
+        private array|ArrayAccess $data = [],
     ) {
         $this->links = new HalLinkContainer();
     }
@@ -133,7 +137,7 @@ final class Hal
     /**
      * Add an embedded resource, identified by $rel and represented by $resource.
      */
-    public function addResource(string $rel, Hal $resource = null, bool $forceArray = true): self
+    public function addResource(string $rel, ?Hal $resource = null, bool $forceArray = true): self
     {
         $this->resources[$rel][] = $resource;
 
@@ -147,7 +151,7 @@ final class Hal
     /**
      * Add an embedded resource, identified by $rel and represented by $resource.
      */
-    public function addIndexedResource(string $rel, int|string $index, Hal $resource): self
+    public function addIndexedResource(string $rel, int|string $index, ?Hal $resource): self
     {
         $this->resources[$rel][$index] = $resource;
 
@@ -183,8 +187,10 @@ final class Hal
 
     /**
      * Set resource's data
+     *
+     * @param Data $data
      */
-    public function setData(array $data = null): self
+    public function setData(array|ArrayAccess $data): self
     {
         $this->data = $data;
 
@@ -194,10 +200,9 @@ final class Hal
     /**
      * Return an array of data (key => value pairs) representing this resource.
      *
-     * @param null|string data key
      * @return mixed Returns an array if no key is passed in, otherwise returns the data
      */
-    public function getData($key = null): mixed
+    public function getData(?string $key = null): mixed
     {
         if ($key) {
             return $this->data[$key] ?? [];
@@ -209,8 +214,6 @@ final class Hal
     /**
      * Return an array of Nocarrier\HalLink objects representing resources
      * related to this one.
-     *
-     * @return array A collection of \Nocarrier\HalLink
      */
     public function getLinks(): HalLinkContainer
     {
@@ -221,10 +224,9 @@ final class Hal
      * Lookup and return an array of HalLink objects for a given relation.
      * Will also resolve CURIE rels if required.
      *
-     * @return list<HalLink>|false
-     *   Array of HalLink objects if found. Otherwise false.
+     * @return ?list<HalLink> Array of HalLink objects if found. Otherwise null.
      */
-    public function getLink(string $rel): array|false
+    public function getLink(string $rel): ?array
     {
         return $this->links->get($rel);
     }
