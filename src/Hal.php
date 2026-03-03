@@ -14,7 +14,6 @@
 namespace Nocarrier;
 
 use ArrayAccess;
-use DateInterval;
 use SimpleXMLElement;
 
 /**

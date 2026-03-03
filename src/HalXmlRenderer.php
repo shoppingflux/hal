@@ -13,6 +13,7 @@
 
 namespace Nocarrier;
 
+use DOMDocument;
 use RuntimeException;
 use SimpleXMLElement;
 
@@ -42,7 +43,7 @@ class HalXmlRenderer implements HalRenderer
 
         $dom = dom_import_simplexml($doc);
 
-        if (null === $dom->ownerDocument) {
+        if (! $dom->ownerDocument instanceof DOMDocument) {
             throw new RuntimeException('Failed to convert SimpleXMLElement to DOMDocument');
         }
 

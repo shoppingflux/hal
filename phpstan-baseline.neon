@@ -1,0 +1,109 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Method Nocarrier\\Hal\:\:asJson\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Hal.php
+
+		-
+			message: '#^Method Nocarrier\\HalJsonRenderer\:\:linksForJson\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/HalJsonRenderer.php
+
+		-
+			message: '#^Method Nocarrier\\HalJsonRenderer\:\:render\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/HalJsonRenderer.php
+
+		-
+			message: '#^Method Nocarrier\\HalJsonRenderer\:\:stripAttributeMarker\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/HalJsonRenderer.php
+
+		-
+			message: '#^Method Nocarrier\\HalJsonRenderer\:\:stripAttributeMarker\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/HalJsonRenderer.php
+
+		-
+			message: '#^Method Nocarrier\\HalLink\:\:__construct\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/HalLink.php
+
+		-
+			message: '#^Method Nocarrier\\HalLink\:\:getAttributes\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/HalLink.php
+
+		-
+			message: '#^Cannot access offset 0 on iterable\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/HalXmlRenderer.php
+
+		-
+			message: '#^Method Nocarrier\\HalXmlRenderer\:\:arrayToXml\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/HalXmlRenderer.php
+
+		-
+			message: '#^Method Nocarrier\\HalXmlRenderer\:\:resourcesForXml\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/HalXmlRenderer.php
+
+		-
+			message: '#^Parameter \#1 \$data of method Nocarrier\\HalXmlRenderer\:\:arrayToXml\(\) expects array, array\|\(ArrayAccess&iterable\) given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/HalXmlRenderer.php
+
+		-
+			message: '#^Parameter \#1 \$data of method Nocarrier\\HalXmlRenderer\:\:arrayToXml\(\) expects array, iterable given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/HalXmlRenderer.php
+
+		-
+			message: '#^Parameter \#1 \$value of function count expects array\|Countable, iterable given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/HalXmlRenderer.php
+
+		-
+			message: '#^Parameter \#2 \$value of method SimpleXMLElement\:\:addChild\(\) expects string\|null, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/HalXmlRenderer.php
+
+		-
+			message: '#^Method Nocarrier\\JsonHalFactory\:\:setEmbeddedResources\(\) has parameter \$embedded with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/JsonHalFactory.php
+
+		-
+			message: '#^Call to function is_array\(\) with SimpleXMLElement will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: src/XmlHalFactory.php
+
+		-
+			message: '#^Parameter \#1 \$hal of static method Nocarrier\\XmlHalFactory\:\:fromXml\(\) expects Nocarrier\\Hal, SimpleXMLElement given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/XmlHalFactory.php
+
+		-
+			message: '#^Parameter \#2 \$data of static method Nocarrier\\XmlHalFactory\:\:fromXml\(\) expects SimpleXMLElement\|string, int\<0, max\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/XmlHalFactory.php
